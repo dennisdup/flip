@@ -14,13 +14,13 @@ async function parse(inputArray) {
 
     const flipAssets = results && results.assets ? results.assets : [];
 
-    if (!flipAssets) {
-      return [];
-    }
-
     let resultsVersions = [];
     inputArray.map((asset) => {
       const fetched = flipAssets[asset];
+
+      if (!fetched) {
+        return;
+      }
 
       if (asset === "bootstrap") {
         const bootstapDepedencies = fetched.dependencies;
