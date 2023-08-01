@@ -30,11 +30,11 @@ async function parse(inputArray) {
     }
 
     function fetchVersions(dependecyObj) {
-      const versions = Object.keys(dependecyObj.versions);
+      const versions = _.keys(dependecyObj.versions);
       const firstVersion = versions[0];
 
-      if (firstVersion && dependecyObj.versions[firstVersion].length) {
-        dependecyObj.versions[firstVersion].forEach((versionAsset) => {
+      if (firstVersion && !_.isEmpty(dependecyObj.versions[firstVersion])) {
+        _.forEach(dependecyObj.versions[firstVersion], (versionAsset) => {
           if (!resultsVersions.includes(versionAsset)) {
             resultsVersions.push(versionAsset);
           }
