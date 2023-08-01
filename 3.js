@@ -1,4 +1,5 @@
 const axios = require("axios");
+const _ = require("lodash");
 
 async function parse(inputArray) {
   try {
@@ -15,58 +16,38 @@ async function parse(inputArray) {
     const flipAssets = results && results.assets ? results.assets : [];
 
     let resultsVersions = [];
-    inputArray.map((asset) => {
-      const fetched = flipAssets[asset];
 
-      if (!fetched) {
-        return;
-      }
+    function fetchDependencies(dependecyObj) {
+      fetchVersions(dependecyObj);
 
-      if (asset === "bootstrap") {
-        const bootstapDepedencies = fetched.dependencies;
+      _.forEach(dependecyObj.dependencies, (dependency) => {
+        if (_.get(flipAssets, `${dependency}.dependencies`)) {
+          fetchDependencies(flipAssets[dependency]);
+        } else {
+          fetchVersions(flipAssets[dependency]);
+        }
+      });
+    }
 
-        const elementToShift = "jquery";
-        const filteredArr = bootstapDepedencies.filter(
-          (element) => element !== elementToShift
-        );
-        filteredArr.push(elementToShift);
+    function fetchVersions(dependecyObj) {
+      const versions = Object.keys(dependecyObj.versions);
+      const firstVersion = versions[0];
 
-        filteredArr.map((dependecyAsset) => {
-          const bootstapAllVersions = Object.keys(
-            flipAssets[dependecyAsset].versions
-          );
-
-          const bootstapFirstVersion = bootstapAllVersions[0];
-          flipAssets[dependecyAsset].versions[bootstapFirstVersion].map(
-            (versionAsset) => {
-              resultsVersions.push(versionAsset);
-            }
-          );
+      if (firstVersion && dependecyObj.versions[firstVersion].length) {
+        dependecyObj.versions[firstVersion].forEach((versionAsset) => {
+          if (!resultsVersions.includes(versionAsset)) {
+            resultsVersions.push(versionAsset);
+          }
         });
       }
+    }
 
-      if (asset === "fliplet-core") {
-        const flipVersions = fetched.versions;
-
-        const flipAllVersions = Object.keys(flipVersions);
-
-        const flipFirstVersion = flipAllVersions[0];
-
-        flipVersions[flipFirstVersion].map((versionAsset) => {
-          resultsVersions.push(versionAsset);
-        });
+    for (let i = 0; i < inputArray.length; i++) {
+      const asset = inputArray[i];
+      if (_.get(flipAssets, `${asset}.dependencies`)) {
+        fetchDependencies(flipAssets[asset]);
       }
-
-      if (asset === "moment") {
-        const momentVersions = fetched.versions;
-
-        const momentAllVersions = Object.keys(momentVersions);
-
-        const momentFirstVersion = momentAllVersions[0];
-
-        resultsVersions.push(momentVersions[momentFirstVersion][0]);
-      }
-    });
+    }
 
     return Promise.resolve(resultsVersions);
   } catch (error) {
