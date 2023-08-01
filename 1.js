@@ -1,11 +1,5 @@
 const _ = require("lodash");
 
-class User {
-  constructor({ id }) {
-    this.id = id;
-  }
-}
-
 const sampleData = {
   apps: [
     { id: 1, title: "Lorem", published: true, userId: 123 },
@@ -22,32 +16,98 @@ const sampleData = {
   ],
 };
 
+class User {
+  constructor({ id }) {
+    this.id = id;
+  }
+
+  select(entity) {
+    this.entity = entity;
+    return this;
+  }
+
+  attributes(selectFields) {
+    this.selectFields = selectFields;
+    return this;
+  }
+
+  where(whereConditions) {
+    this.whereConditions = whereConditions;
+    this.whereConditions.userId = this.id;
+    return this;
+  }
+
+  order(orderBy) {
+    this.orderBy = orderBy;
+    return this;
+  }
+
+  findAll() {
+    if (
+      !this.entity ||
+      !this.selectFields ||
+      !this.whereConditions ||
+      !this.orderBy
+    ) {
+      return Promise.reject(new Error("Error"));
+    }
+
+    const results = _.chain(sampleData[this.entity])
+      .filter((item) => {
+        return _.every(this.whereConditions, (value, key) => {
+          return _.isEqual(item[key], value);
+        });
+      })
+      .sortBy((item) => {
+        return _.map(this.orderBy, (key) => item[key]);
+      })
+      .map((app) => _.pick(app, this.selectFields))
+      .value();
+
+    return Promise.resolve(results);
+  }
+
+  findOne() {
+    if (!this.entity || !this.selectFields || !this.whereConditions) {
+      return Promise.reject(new Error("Error"));
+    }
+
+    const results = _.find(sampleData[this.entity], (item) => {
+      return _.every(this.whereConditions, (value, key) => {
+        return _.isEqual(item[key], value);
+      });
+    });
+
+    if (!results) return Promise.resolve(null);
+
+    const filteredResult = _.pick(results, this.selectFields);
+    return Promise.resolve(filteredResult);
+  }
+}
+
 const user = new User({
   id: 123,
 });
 
-// Without lodash
-// const userApps = sampleData.apps
-//   .filter((app) => app.userId === user.id && app.published)
-//   .map((value) => {
-//     return {
-//       id: value.id,
-//       title: value.title,
-//     };
-//   });
+user
+  .select("apps")
+  .attributes(["id", "title"])
+  .where({ published: true })
+  .order(["title"])
+  .findAll()
+  .then((apps) => {
+    // The expected result is for the "apps" array is:
+    // [ { id: 6, title: 'Et' }, { id: 1, title: 'Lorem' } ]
+    console.log(apps);
+  });
 
-const userApps = _.map(
-  _.filter(sampleData.apps, (app) => app.userId === user.id && app.published),
-  (app) => _.pick(app, ["id", "title"])
-);
-
-const userOrganization = _.chain(sampleData.organizations)
-  .find({ suspended: false, userId: user.id })
-  .pick(["id", "name"])
-  .value();
-
-console.log(user.id);
-
-console.log("userApps", userApps);
-
-console.log("userOrganization", userOrganization);
+user
+  .select("organizations")
+  .attributes(["name"])
+  .where({ suspended: false })
+  .findOne()
+  .then((organization) => {
+    // The expected result is for the "organization" object is:
+    // { id: 3, name: 'Fliplet' }
+    console.log(organization);
+  });
