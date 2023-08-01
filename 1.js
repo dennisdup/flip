@@ -1,24 +1,9 @@
 const _ = require("lodash");
 
-const sampleData = {
-  apps: [
-    { id: 1, title: "Lorem", published: true, userId: 123 },
-    { id: 2, title: "Ipsum", published: false, userId: 123 },
-    { id: 3, title: "Dolor", published: true, userId: 456 },
-    { id: 4, title: "Sit", published: true, userId: 789 },
-    { id: 5, title: "Amet", published: false, userId: 123 },
-    { id: 6, title: "Et", published: true, userId: 123 },
-  ],
-  organizations: [
-    { id: 1, name: "Google", suspended: true, userId: 123 },
-    { id: 2, name: "Apple", suspended: false, userId: 456 },
-    { id: 3, name: "Fliplet", suspended: false, userId: 123 },
-  ],
-};
-
 class User {
-  constructor({ id }) {
+  constructor({ id, sampleData }) {
     this.id = id;
+    this.sampleData = sampleData;
   }
 
   select(entity) {
@@ -52,7 +37,7 @@ class User {
       return Promise.reject(new Error("Error"));
     }
 
-    const results = _.chain(sampleData[this.entity])
+    const results = _.chain(this.sampleData[this.entity])
       .filter((item) => {
         return _.every(this.whereConditions, (value, key) => {
           return _.isEqual(item[key], value);
@@ -72,7 +57,7 @@ class User {
       return Promise.reject(new Error("Error"));
     }
 
-    const results = _.find(sampleData[this.entity], (item) => {
+    const results = _.find(this.sampleData[this.entity], (item) => {
       return _.every(this.whereConditions, (value, key) => {
         return _.isEqual(item[key], value);
       });
@@ -85,8 +70,25 @@ class User {
   }
 }
 
+const sampleData = {
+  apps: [
+    { id: 1, title: "Lorem", published: true, userId: 123 },
+    { id: 2, title: "Ipsum", published: false, userId: 123 },
+    { id: 3, title: "Dolor", published: true, userId: 456 },
+    { id: 4, title: "Sit", published: true, userId: 789 },
+    { id: 5, title: "Amet", published: false, userId: 123 },
+    { id: 6, title: "Et", published: true, userId: 123 },
+  ],
+  organizations: [
+    { id: 1, name: "Google", suspended: true, userId: 123 },
+    { id: 2, name: "Apple", suspended: false, userId: 456 },
+    { id: 3, name: "Fliplet", suspended: false, userId: 123 },
+  ],
+};
+
 const user = new User({
   id: 123,
+  sampleData,
 });
 
 user
